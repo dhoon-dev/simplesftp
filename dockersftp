@@ -1,0 +1,47 @@
+#!/usr/bin/env sh
+
+# Refer to https://github.com/atmoz/sftp
+
+cd $(dirname $0)
+ROOT=$(pwd -P)
+NAME=sftp
+
+start() {
+    id=$(docker run \
+        --name $NAME \
+        -v $ROOT/users.conf:/etc/sftp/users.conf:ro \
+        -v $ROOT/home:/home \
+        -p 2222:22 -d atmoz/sftp)
+    if [ $? -eq 0 ]; then
+        echo "created and started: $id"
+    fi
+}
+
+stop() {
+    docker stop $NAME > /dev/null && docker rm $NAME > /dev/null
+    if [ $? -eq 0 ]; then
+        echo "stopped and removed."
+    fi
+}
+
+case $1 in
+    manage)
+        docker exec -i -t $NAME /bin/bash
+        break
+        ;;
+    start)
+        start
+        break
+        ;;
+    restart)
+        stop && start
+        break
+        ;;
+    stop)
+        stop
+        break
+        ;;
+    *)
+        >&2 echo "usage: sftpdocker [start | restart | stop | manage]"
+        ;;
+esac
